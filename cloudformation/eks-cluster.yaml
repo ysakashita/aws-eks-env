@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EKS cluster for sandbox environment
+
+Parameters:
+  ClusterName:
+    Type: String
+  KubernetesVersion:
+    Type: String
+    Default: '1.32'
+  VpcStackName:
+    Type: String
+  IamStackName:
+    Type: String
+
+Resources:
+  ClusterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${ClusterName}-cluster-sg
+      GroupDescription: Security group for EKS cluster control plane
+      VpcId: !ImportValue
+        Fn::Sub: ${VpcStackName}-VpcId
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: Name
+          Value: !Sub ${ClusterName}-cluster-sg
+
+  # Explicitly manage the log group so it is removed on `make delete`
+  ClusterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/eks/${ClusterName}/cluster
+      RetentionInDays: 7
+
+  Cluster:
+    Type: AWS::EKS::Cluster
+    DependsOn: ClusterLogGroup
+    Properties:
+      Name: !Ref ClusterName
+      Version: !Ref KubernetesVersion
+      RoleArn: !ImportValue
+        Fn::Sub: ${IamStackName}-ClusterRoleArn
+      ResourcesVpcConfig:
+        SubnetIds:
+          - !ImportValue
+            Fn::Sub: ${VpcStackName}-PublicSubnet1Id
+          - !ImportValue
+            Fn::Sub: ${VpcStackName}-PublicSubnet2Id
+          - !ImportValue
+            Fn::Sub: ${VpcStackName}-PrivateSubnet1Id
+          - !ImportValue
+            Fn::Sub: ${VpcStackName}-PrivateSubnet2Id
+        SecurityGroupIds:
+          - !Ref ClusterSecurityGroup
+        EndpointPublicAccess: true
+        EndpointPrivateAccess: true
+      Logging:
+        ClusterLogging:
+          EnabledTypes:
+            - Type: api
+            - Type: audit
+      Tags:
+        - Key: Name
+          Value: !Ref ClusterName
+
+  VpcCniAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      ClusterName: !Ref Cluster
+      AddonName: vpc-cni
+      ResolveConflicts: OVERWRITE
+
+  KubeProxyAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      ClusterName: !Ref Cluster
+      AddonName: kube-proxy
+      ResolveConflicts: OVERWRITE
+
+Outputs:
+  ClusterName:
+    Value: !Ref Cluster
+    Export:
+      Name: !Sub ${AWS::StackName}-ClusterName
+
+  ClusterEndpoint:
+    Value: !GetAtt Cluster.Endpoint
+    Export:
+      Name: !Sub ${AWS::StackName}-ClusterEndpoint
+
+  ClusterSecurityGroupId:
+    Value: !Ref ClusterSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-ClusterSecurityGroupId
+
+  OidcIssuer:
+    Value: !GetAtt Cluster.OpenIdConnectIssuerUrl
+    Export:
+      Name: !Sub ${AWS::StackName}-OidcIssuer
