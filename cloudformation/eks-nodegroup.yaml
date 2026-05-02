@@ -27,64 +27,6 @@ Parameters:
     Default: 20
 
 Resources:
-  NodeSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: !Sub ${ClusterName}-node-sg
-      GroupDescription: Security group for EKS worker nodes
-      VpcId: !ImportValue
-        Fn::Sub: ${VpcStackName}-VpcId
-      SecurityGroupEgress:
-        - IpProtocol: '-1'
-          CidrIp: 0.0.0.0/0
-          Description: Allow all outbound traffic
-      Tags:
-        - Key: Name
-          Value: !Sub ${ClusterName}-node-sg
-        - Key: !Sub kubernetes.io/cluster/${ClusterName}
-          Value: owned
-
-  NodeToNodeIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: '-1'
-      Description: Allow node to node communication
-
-  ClusterToNodeIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !ImportValue
-        Fn::Sub: ${ClusterStackName}-ClusterSecurityGroupId
-      IpProtocol: tcp
-      FromPort: 1025
-      ToPort: 65535
-      Description: Allow control plane to reach nodes on ephemeral ports
-
-  ClusterToNodeHttpsIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref NodeSecurityGroup
-      SourceSecurityGroupId: !ImportValue
-        Fn::Sub: ${ClusterStackName}-ClusterSecurityGroupId
-      IpProtocol: tcp
-      FromPort: 443
-      ToPort: 443
-      Description: Allow control plane to reach nodes on 443
-
-  NodeToClusterIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !ImportValue
-        Fn::Sub: ${ClusterStackName}-ClusterSecurityGroupId
-      SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: tcp
-      FromPort: 443
-      ToPort: 443
-      Description: Allow nodes to reach cluster API
-
   NodeGroup:
     Type: AWS::EKS::Nodegroup
     Properties:
@@ -112,12 +54,17 @@ Resources:
       Tags:
         Name: !Sub ${ClusterName}-nodes
 
-Outputs:
-  NodeSecurityGroupId:
-    Value: !Ref NodeSecurityGroup
-    Export:
-      Name: !Sub ${AWS::StackName}-NodeSecurityGroupId
+  # CoreDNS is a Deployment and requires nodes to schedule — install after NodeGroup
+  CoreDnsAddon:
+    Type: AWS::EKS::Addon
+    DependsOn: NodeGroup
+    Properties:
+      ClusterName: !ImportValue
+        Fn::Sub: ${ClusterStackName}-ClusterName
+      AddonName: coredns
+      ResolveConflicts: OVERWRITE
 
+Outputs:
   NodeGroupName:
     Value: !Ref NodeGroup
     Export:

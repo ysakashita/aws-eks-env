@@ -34,7 +34,7 @@ vpc → iam → eks-cluster → eks-nodegroup
 vi params.env
 ```
 
-最低限 `AWS_ACCOUNT_ID` を設定してください。必要に応じて `CLUSTER_NAME` や `AWS_REGION` も変更できます。
+必要に応じて `CLUSTER_NAME` や `AWS_REGION` を変更してください。
 
 ### 2. クラスターを作成
 
@@ -93,8 +93,10 @@ make create-nodegroup
 ## コスト
 
 サンドボックスの主なコスト要素 (ap-northeast-1):
-- EKS クラスター: $0.10/時間
+- EKS クラスター: $0.10/時間 (標準サポート期間内)
 - NAT Gateway: $0.062/時間 + データ転送
 - EC2 (t3.medium × 2): $0.052/台/時間
+
+> **注意**: EKS バージョンが標準サポート期間 (リリースから約14ヶ月) を過ぎると、延長サポート料金 (~$0.60/時間) が適用されます。`params.env` の `EKS_VERSION` を最新バージョンに保つことを推奨します。
 
 **使わないときは `make delete` で削除することを推奨します。**

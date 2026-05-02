@@ -6,7 +6,7 @@ Parameters:
     Type: String
   KubernetesVersion:
     Type: String
-    Default: '1.30'
+    Default: '1.32'
   VpcStackName:
     Type: String
   IamStackName:
@@ -28,16 +28,22 @@ Resources:
         - Key: Name
           Value: !Sub ${ClusterName}-cluster-sg
 
+  # Explicitly manage the log group so it is removed on `make delete`
+  ClusterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/eks/${ClusterName}/cluster
+      RetentionInDays: 7
+
   Cluster:
     Type: AWS::EKS::Cluster
+    DependsOn: ClusterLogGroup
     Properties:
       Name: !Ref ClusterName
       Version: !Ref KubernetesVersion
       RoleArn: !ImportValue
         Fn::Sub: ${IamStackName}-ClusterRoleArn
       ResourcesVpcConfig:
-        VpcId: !ImportValue
-          Fn::Sub: ${VpcStackName}-VpcId
         SubnetIds:
           - !ImportValue
             Fn::Sub: ${VpcStackName}-PublicSubnet1Id
@@ -72,13 +78,6 @@ Resources:
     Properties:
       ClusterName: !Ref Cluster
       AddonName: kube-proxy
-      ResolveConflicts: OVERWRITE
-
-  CoreDnsAddon:
-    Type: AWS::EKS::Addon
-    Properties:
-      ClusterName: !Ref Cluster
-      AddonName: coredns
       ResolveConflicts: OVERWRITE
 
 Outputs:

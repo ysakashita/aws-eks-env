@@ -42,13 +42,6 @@ Resources:
         - Key: Name
           Value: !Sub ${ClusterName}-nodegroup-role
 
-  NodeGroupInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      InstanceProfileName: !Sub ${ClusterName}-nodegroup-profile
-      Roles:
-        - !Ref NodeGroupRole
-
 Outputs:
   ClusterRoleArn:
     Value: !GetAtt ClusterRole.Arn
@@ -59,8 +52,3 @@ Outputs:
     Value: !GetAtt NodeGroupRole.Arn
     Export:
       Name: !Sub ${AWS::StackName}-NodeGroupRoleArn
-
-  NodeGroupInstanceProfileArn:
-    Value: !GetAtt NodeGroupInstanceProfile.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-NodeGroupInstanceProfileArn

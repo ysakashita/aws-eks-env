@@ -88,7 +88,7 @@ delete-nodegroup:
 	-aws cloudformation delete-stack \
 		--stack-name $(NODEGROUP_STACK) \
 		--region $(AWS_REGION)
-	-aws cloudformation wait stack-delete-complete \
+	aws cloudformation wait stack-delete-complete \
 		--stack-name $(NODEGROUP_STACK) \
 		--region $(AWS_REGION)
 
@@ -96,7 +96,7 @@ delete-cluster:
 	-aws cloudformation delete-stack \
 		--stack-name $(CLUSTER_STACK) \
 		--region $(AWS_REGION)
-	-aws cloudformation wait stack-delete-complete \
+	aws cloudformation wait stack-delete-complete \
 		--stack-name $(CLUSTER_STACK) \
 		--region $(AWS_REGION)
 
@@ -104,7 +104,7 @@ delete-iam:
 	-aws cloudformation delete-stack \
 		--stack-name $(IAM_STACK) \
 		--region $(AWS_REGION)
-	-aws cloudformation wait stack-delete-complete \
+	aws cloudformation wait stack-delete-complete \
 		--stack-name $(IAM_STACK) \
 		--region $(AWS_REGION)
 
@@ -112,7 +112,7 @@ delete-vpc:
 	-aws cloudformation delete-stack \
 		--stack-name $(VPC_STACK) \
 		--region $(AWS_REGION)
-	-aws cloudformation wait stack-delete-complete \
+	aws cloudformation wait stack-delete-complete \
 		--stack-name $(VPC_STACK) \
 		--region $(AWS_REGION)
 
