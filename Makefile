@@ -7,7 +7,8 @@ IAM_STACK       := $(STACK_PREFIX)-iam
 CLUSTER_STACK   := $(STACK_PREFIX)-cluster
 NODEGROUP_STACK := $(STACK_PREFIX)-nodegroup
 
-INGRESS_NGINX_NS := ingress-nginx
+INGRESS_NGINX_NS      := ingress-nginx
+INGRESS_NGINX_VERSION := 1.11.0
 
 .PHONY: help create delete status kubeconfig validate \
         create-vpc create-iam create-cluster create-nodegroup \
@@ -32,7 +33,7 @@ help:
 	@echo "設定: params.env を編集してください"
 	@echo ""
 	@echo "サンプルアプリ:"
-	@echo "  make deploy-ingress-controller   ingress-nginx をインストール"
+	@echo "  make deploy-ingress-controller   ingress-nginx をインストール (kubectl apply)"
 	@echo "  make deploy-sample               nginx サンプルをデプロイ"
 	@echo "  make ingress-url                 アクセス用 URL を表示"
 	@echo "  make undeploy-sample             サンプルを削除"
@@ -144,15 +145,14 @@ kubeconfig:
 		--alias $(CLUSTER_NAME)
 
 deploy-ingress-controller:
-	helm upgrade --install ingress-nginx ingress-nginx \
-		--repo https://kubernetes.github.io/ingress-nginx \
-		--namespace $(INGRESS_NGINX_NS) \
-		--create-namespace \
-		--wait
+	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v$(INGRESS_NGINX_VERSION)/deploy/static/provider/aws/deploy.yaml
+	kubectl wait --namespace $(INGRESS_NGINX_NS) \
+		--for=condition=ready pod \
+		--selector=app.kubernetes.io/component=controller \
+		--timeout=120s
 
 undeploy-ingress-controller:
-	helm uninstall ingress-nginx -n $(INGRESS_NGINX_NS)
-	kubectl delete namespace $(INGRESS_NGINX_NS) --ignore-not-found
+	kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v$(INGRESS_NGINX_VERSION)/deploy/static/provider/aws/deploy.yaml --ignore-not-found
 
 deploy-sample:
 	kubectl apply -f k8s/sample-nginx/
