@@ -96,11 +96,6 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-ClusterSecurityGroupId
 
-  ClusterCertificateAuthority:
-    Value: !GetAtt Cluster.CertificateAuthorityData
-    Export:
-      Name: !Sub ${AWS::StackName}-ClusterCertificateAuthority
-
   OidcIssuer:
     Value: !GetAtt Cluster.OpenIdConnectIssuerUrl
     Export:
