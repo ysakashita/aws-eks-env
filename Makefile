@@ -7,9 +7,14 @@ IAM_STACK       := $(STACK_PREFIX)-iam
 CLUSTER_STACK   := $(STACK_PREFIX)-cluster
 NODEGROUP_STACK := $(STACK_PREFIX)-nodegroup
 
+INGRESS_NGINX_NS      := ingress-nginx
+INGRESS_NGINX_VERSION := 1.11.0
+
 .PHONY: help create delete status kubeconfig validate \
         create-vpc create-iam create-cluster create-nodegroup \
-        delete-nodegroup delete-cluster delete-iam delete-vpc
+        delete-nodegroup delete-cluster delete-iam delete-vpc \
+        deploy-ingress-controller undeploy-ingress-controller \
+        deploy-sample undeploy-sample ingress-url
 
 help:
 	@echo "EKS Sandbox - CloudFormation管理"
@@ -26,6 +31,13 @@ help:
 	@echo "  make delete-vpc / delete-iam / delete-cluster / delete-nodegroup"
 	@echo ""
 	@echo "設定: params.env を編集してください"
+	@echo ""
+	@echo "サンプルアプリ:"
+	@echo "  make deploy-ingress-controller   ingress-nginx をインストール (kubectl apply)"
+	@echo "  make deploy-sample               nginx サンプルをデプロイ"
+	@echo "  make ingress-url                 アクセス用 URL を表示"
+	@echo "  make undeploy-sample             サンプルを削除"
+	@echo "  make undeploy-ingress-controller ingress-nginx を削除"
 
 create: create-vpc create-iam create-cluster create-nodegroup
 
@@ -131,6 +143,28 @@ kubeconfig:
 		--name $(CLUSTER_NAME) \
 		--region $(AWS_REGION) \
 		--alias $(CLUSTER_NAME)
+
+deploy-ingress-controller:
+	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v$(INGRESS_NGINX_VERSION)/deploy/static/provider/aws/deploy.yaml
+	kubectl wait --namespace $(INGRESS_NGINX_NS) \
+		--for=condition=ready pod \
+		--selector=app.kubernetes.io/component=controller \
+		--timeout=120s
+
+undeploy-ingress-controller:
+	kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v$(INGRESS_NGINX_VERSION)/deploy/static/provider/aws/deploy.yaml --ignore-not-found
+
+deploy-sample:
+	kubectl apply -f k8s/sample-nginx/
+
+undeploy-sample:
+	kubectl delete -f k8s/sample-nginx/ --ignore-not-found
+
+ingress-url:
+	@echo "Ingress URL:"
+	@kubectl get ingress nginx-sample \
+		-o jsonpath='http://{.status.loadBalancer.ingress[0].hostname}{"\n"}' 2>/dev/null \
+		|| echo "(まだ割り当てられていません。1〜2分待ってから再実行してください)"
 
 validate:
 	aws cloudformation validate-template \
