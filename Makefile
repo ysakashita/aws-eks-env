@@ -118,12 +118,12 @@ delete-vpc:
 
 status:
 	@for stack in $(VPC_STACK) $(IAM_STACK) $(CLUSTER_STACK) $(NODEGROUP_STACK); do \
-		printf "%-40s " "$$stack:"; \
-		aws cloudformation describe-stacks \
+		STATUS=$$(aws cloudformation describe-stacks \
 			--stack-name $$stack \
 			--region $(AWS_REGION) \
 			--query "Stacks[0].StackStatus" \
-			--output text 2>/dev/null || echo "NOT FOUND"; \
+			--output text 2>/dev/null) || STATUS="NOT FOUND"; \
+		printf "%-40s %s\n" "$$stack:" "$$STATUS"; \
 	done
 
 kubeconfig:
