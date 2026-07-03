@@ -6,7 +6,7 @@ CloudFormation を使って EKS サンドボックスクラスタを簡単に作
 
 ```
 ├── cloudformation/
-│   ├── vpc.yaml           # VPC / サブネット / IGW / NAT GW
+│   ├── vpc.yaml           # VPC / サブネット / IGW
 │   ├── iam.yaml           # EKS クラスター・ノード用 IAM ロール
 │   ├── eks-cluster.yaml   # EKS クラスター + アドオン (vpc-cni, kube-proxy, coredns)
 │   └── eks-nodegroup.yaml # マネージドノードグループ
@@ -84,18 +84,16 @@ make create-nodegroup
 ## ネットワーク構成
 
 - VPC: `10.0.0.0/16`
-- パブリックサブネット: AZ-a (`10.0.1.0/24`), AZ-c (`10.0.2.0/24`)
-- プライベートサブネット: AZ-a (`10.0.11.0/24`), AZ-c (`10.0.12.0/24`)
-- NAT Gateway: 1台 (パブリックサブネット AZ-a)
-- ノードはプライベートサブネットに配置
+- パブリックサブネット: AZ-a (`10.0.1.0/24`), AZ-b (`10.0.2.0/24`)
+- NAT Gateway なし (Internet Gateway 経由でインターネットアクセス)
+- ノードはパブリックサブネットに配置 (パブリック IP 自動割り当て)
 - kubectl はパブリックエンドポイント経由でアクセス可能
 
 ## コスト
 
-サンドボックスの主なコスト要素 (ap-northeast-1):
+サンドボックスの主なコスト要素 (us-east-1):
 - EKS クラスター: $0.10/時間 (標準サポート期間内)
-- NAT Gateway: $0.062/時間 + データ転送
-- EC2 (t3.medium × 2): $0.052/台/時間
+- EC2 (t3.medium × 2): $0.0416/台/時間
 
 > **注意**: EKS バージョンが標準サポート期間 (リリースから約14ヶ月) を過ぎると、延長サポート料金 (~$0.60/時間) が適用されます。`params.env` の `EKS_VERSION` を最新バージョンに保つことを推奨します。
 
