@@ -49,10 +49,6 @@ Resources:
             Fn::Sub: ${VpcStackName}-PublicSubnet1Id
           - !ImportValue
             Fn::Sub: ${VpcStackName}-PublicSubnet2Id
-          - !ImportValue
-            Fn::Sub: ${VpcStackName}-PrivateSubnet1Id
-          - !ImportValue
-            Fn::Sub: ${VpcStackName}-PrivateSubnet2Id
         SecurityGroupIds:
           - !Ref ClusterSecurityGroup
         EndpointPublicAccess: true

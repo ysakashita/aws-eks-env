@@ -52,8 +52,6 @@ create-vpc:
 			VpcCidr=$(VPC_CIDR) \
 			PublicSubnet1Cidr=$(PUBLIC_SUBNET_1_CIDR) \
 			PublicSubnet2Cidr=$(PUBLIC_SUBNET_2_CIDR) \
-			PrivateSubnet1Cidr=$(PRIVATE_SUBNET_1_CIDR) \
-			PrivateSubnet2Cidr=$(PRIVATE_SUBNET_2_CIDR) \
 		--region $(AWS_REGION) \
 		--no-fail-on-empty-changeset
 

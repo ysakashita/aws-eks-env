@@ -37,9 +37,9 @@ Resources:
         Fn::Sub: ${IamStackName}-NodeGroupRoleArn
       Subnets:
         - !ImportValue
-          Fn::Sub: ${VpcStackName}-PrivateSubnet1Id
+          Fn::Sub: ${VpcStackName}-PublicSubnet1Id
         - !ImportValue
-          Fn::Sub: ${VpcStackName}-PrivateSubnet2Id
+          Fn::Sub: ${VpcStackName}-PublicSubnet2Id
       ScalingConfig:
         MinSize: !Ref NodeMinSize
         MaxSize: !Ref NodeMaxSize
